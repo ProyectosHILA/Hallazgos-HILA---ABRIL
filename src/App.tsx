@@ -28,8 +28,33 @@ import Markdown from 'react-markdown';
 // --- Interfaces ---
 interface User {
   username: string;
-  role: string;
+  area: string;
+  role?: string;
 }
+
+// Credenciales y procesos autorizados
+const AUTHORIZED_USERS: Record<string, { area: string; pass: string }> = {
+  'CE-001': { area: 'Consulta Externa', pass: 'CE21#' },
+  'CE-002': { area: 'Consulta Externa', pass: 'CE21#' },
+  'URG-001': { area: 'Urgencias', pass: 'UR22#' },
+  'CIR-001': { area: 'Cirugía', pass: 'CI23#' },
+  'HOS-001': { area: 'Hospitalización', pass: 'HO24#' },
+  'GAF-001': { area: 'Gestión Ambiente Físico', pass: 'AF25#' },
+  'GCL-001': { area: 'Gestión Cliente', pass: 'GC26#' },
+  'IMG-001': { area: 'Imágenes Diagnósticas', pass: 'ID27#' },
+  'LAB-001': { area: 'Laboratorio Clínico', pass: 'LC28#' },
+  'SFA-001': { area: 'Servicio Farmacéutico', pass: 'SF29#' },
+  'GIN-001': { area: 'Gestión de la Información', pass: 'GI30#' },
+  'GCF-001': { area: 'Gestión Contable y Financiera', pass: 'GF31#' },
+  'NUT-001': { area: 'Nutrición', pass: 'NU32#' },
+  'GRF-001': { area: 'Gestión Recursos Físicos', pass: 'RF33#' },
+  'GHU-001': { area: 'Gestión Humana', pass: 'GH34#' },
+  // Compatibilidad administrativa
+  'proyectos': { area: 'Proyectos HILA', pass: 'Riesgo123-' },
+  'Admin1': { area: 'Administración HILA', pass: 'Riesgo123-' },
+  'Admin2': { area: 'Administración HILA', pass: 'Riesgo123-' },
+};
+
 
 interface FindingRow {
   id: number;
@@ -55,10 +80,10 @@ const Login = ({ onLogin, customLogo }: { onLogin: (user: User) => void, customL
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanUsername = username.trim();
-    if ((cleanUsername === 'Admin1' || cleanUsername === 'proyectos@hinfantil.org') && password === 'Riesgo123-') {
-      onLogin({ username: 'proyectos@hinfantil.org', role: 'Admin1' });
-    } else if (cleanUsername === 'Admin2' && password === 'Riesgo123-') {
-      onLogin({ username: 'Admin2', role: 'Admin2' });
+    const userFound = AUTHORIZED_USERS[cleanUsername];
+
+    if (userFound && userFound.pass === password) {
+      onLogin({ username: cleanUsername, area: userFound.area, role: cleanUsername });
     } else {
       setError('Credenciales inválidas o acceso no autorizado');
     }
@@ -102,11 +127,11 @@ const Login = ({ onLogin, customLogo }: { onLogin: (user: User) => void, customL
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Usuario o Correo</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Usuario</label>
             <input 
               type="text" 
               required
-              placeholder="proyectos@hinfantil.org"
+              placeholder="ejemplo: proyectos"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-800 font-medium"
@@ -502,12 +527,12 @@ export default function App() {
 
           <div className="flex items-center gap-3 px-2">
             <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0 border border-indigo-500/10 uppercase">
-              {user.username.slice(0, 2)}
+              {user.area ? user.area.slice(0, 2).toUpperCase() : user.username.slice(0, 2)}
             </div>
             {isSidebarOpen && (
               <div className="flex-1 overflow-hidden">
-                <p className="text-xs font-bold truncate text-white">{user.username}</p>
-                <p className="text-[10px] text-slate-400 truncate">{user.role}</p>
+                <p className="text-xs font-bold truncate text-white" title={user.area}>{user.area}</p>
+                <p className="text-[10px] text-slate-400 truncate font-mono">{user.username}</p>
               </div>
             )}
           </div>
@@ -519,6 +544,17 @@ export default function App() {
             <LogOut className="w-4 h-4 flex-shrink-0" />
             {isSidebarOpen && <span>Cerrar Sesión</span>}
           </button>
+          {isSidebarOpen ? (
+            <div className="pt-2 text-center border-t border-slate-800/80">
+              <p className="text-[11px] text-slate-400 font-medium tracking-wide">
+                creado por: <span className="text-slate-300 font-semibold">Proyectos HILA</span>
+              </p>
+            </div>
+          ) : (
+            <div className="pt-2 text-center" title="creado por: Proyectos HILA">
+              <span className="text-[9px] text-slate-500 font-bold block">HILA</span>
+            </div>
+          )}
         </div>
       </motion.aside>
 
