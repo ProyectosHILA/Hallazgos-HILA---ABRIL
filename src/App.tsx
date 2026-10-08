@@ -4,10 +4,8 @@ import {
   ShieldAlert, 
   MessageSquare, 
   LogOut, 
-  Upload, 
   Search, 
   Menu, 
-  X, 
   ChevronRight, 
   BrainCircuit, 
   Loader2, 
@@ -269,46 +267,6 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  // Logo upload and reset
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64String = event.target?.result as string;
-      if (!base64String) return;
-
-      setCustomLogo(base64String);
-      localStorage.setItem('hila_custom_logo', base64String);
-
-      try {
-        await fetch('/api/logo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ logo: base64String }),
-        });
-      } catch (err) {
-        console.error("Error saving logo to server:", err);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleLogoReset = async () => {
-    setCustomLogo('');
-    localStorage.removeItem('hila_custom_logo');
-    try {
-      await fetch('/api/logo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logo: '' }),
-      });
-    } catch (err) {
-      console.error("Error resetting logo on server:", err);
-    }
-  };
-
   // Filter & Search computation
   const filteredFindings = useMemo(() => {
     return findings.filter(row => {
@@ -501,30 +459,8 @@ export default function App() {
           </button>
         </nav>
 
-        {/* Custom Logo Manager & Session */}
+        {/* Session and Profile */}
         <div className="p-4 border-t border-slate-800 space-y-4">
-          {isSidebarOpen && (
-            <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/60 space-y-3">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Logo Institucional</h4>
-              <div className="flex items-center gap-2">
-                <label className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
-                  <Upload className="w-3.5 h-3.5" />
-                  Cambiar
-                  <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                </label>
-                {customLogo && (
-                  <button 
-                    onClick={handleLogoReset}
-                    className="p-1.5 bg-slate-800 hover:bg-rose-950 hover:text-rose-400 text-slate-400 rounded-lg transition-colors text-xs"
-                    title="Restablecer logo predeterminado"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           <div className="flex items-center gap-3 px-2">
             <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0 border border-indigo-500/10 uppercase">
               {user.area ? user.area.slice(0, 2).toUpperCase() : user.username.slice(0, 2)}
