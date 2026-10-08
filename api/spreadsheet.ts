@@ -1,142 +1,94 @@
-export default async function handler(
-  req: any,
-  res: any
-) {
-
-  // =====================================================
-  // SOLO PERMITIR GET
-  // =====================================================
-
+export default async function handler(req: any, res: any) {
   if (req.method !== "GET") {
-
     return res.status(405).json({
       success: false,
-      error: "Método no permitido"
+      error: "Método no permitido",
     });
-
   }
 
-
   try {
-
-    // =====================================================
-    // VARIABLES DE VERCEL
-    // =====================================================
-
-    const apiUrl =
-      process.env.SHEETS_API_URL;
-
-    const apiToken =
-      process.env.SHEETS_API_TOKEN;
-
+    const apiUrl = process.env.SHEETS_API_URL;
+    const apiToken = process.env.SHEETS_API_TOKEN;
 
     if (!apiUrl) {
-
       throw new Error(
         "SHEETS_API_URL no está configurada en Vercel."
       );
-
     }
-
 
     if (!apiToken) {
-
       throw new Error(
-        "SHEETS_API_TOKEN no está configurado en Vercel."
+        "SHEETS_API_TOKEN no está configurada en Vercel."
       );
-
     }
 
-
-    // =====================================================
-    // CONSTRUIR URL
-    // =====================================================
-
-    const separator =
-      apiUrl.includes("?")
-        ? "&"
-        : "?";
-
+    const separator = apiUrl.includes("?") ? "&" : "?";
 
     const url =
       `${apiUrl}${separator}token=${encodeURIComponent(apiToken)}`;
 
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      redirect: "follow",
+    });
 
-    // =====================================================
-    // CONSULTAR APPS SCRIPT
-    // =====================================================
-
-    const response =
-      await fetch(url, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json"
-        }
-      });
-
+    const rawText = await response.text();
 
     if (!response.ok) {
-
-      throw new Error(
-        `Google Apps Script respondió con HTTP ${response.status}`
+      console.error(
+        "Error Apps Script:",
+        response.status,
+        rawText
       );
 
+      throw new Error(
+        `Apps Script respondió HTTP ${response.status}`
+      );
     }
 
+    let data: any;
 
-    const data =
-      await response.json();
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      console.error(
+        "Respuesta no JSON de Apps Script:",
+        rawText
+      );
 
-
-    // =====================================================
-    // VALIDAR RESPUESTA
-    // =====================================================
+      throw new Error(
+        "Apps Script no devolvió JSON válido."
+      );
+    }
 
     if (!data.success) {
-
       throw new Error(
         data.error ||
-        "Google Sheets no devolvió los datos correctamente."
+          "Apps Script indicó un error."
       );
-
     }
-
-
-    // =====================================================
-    // ENVIAR A LA APLICACIÓN
-    // =====================================================
 
     return res.status(200).json({
       success: true,
-      total:
-        data.total ||
-        data.data?.length ||
-        0,
-
-      data:
-        data.data ||
-        []
+      total: data.total ?? data.data?.length ?? 0,
+      data: Array.isArray(data.data)
+        ? data.data
+        : [],
     });
-
-
   } catch (error: any) {
-
     console.error(
-      "ERROR SINCRONIZACIÓN GOOGLE SHEETS:",
+      "ERROR /api/spreadsheet:",
       error
     );
 
-
     return res.status(500).json({
-
       success: false,
-
       error:
         error?.message ||
-        "No fue posible sincronizar Google Sheets."
-
+        "No fue posible sincronizar Google Sheets.",
     });
-
   }
-
 }
