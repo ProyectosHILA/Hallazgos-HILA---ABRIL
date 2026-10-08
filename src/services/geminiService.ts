@@ -9,13 +9,15 @@ import { Finding } from "../types";
  * - import.meta.env.VITE_GEMINI_API_KEY (Vite clásico)
  * - process.env.GEMINI_API_KEY (Node / algunos runtimes)
  */
-const apiKey =
-  (import.meta as any)?.env?.GEMINI_API_KEY ||
-  (import.meta as any)?.env?.VITE_GEMINI_API_KEY ||
-  (process as any)?.env?.GEMINI_API_KEY ||
-  "";
+const apiKey = process.env.GEMINI_API_KEY;
 
-const ai = new GoogleGenAI({ apiKey });
+if (!apiKey) {
+  throw new Error("GEMINI_API_KEY no está configurada en el servidor.");
+}
+
+const ai = new GoogleGenAI({
+  apiKey
+});
 
 function buildStats(findings: Finding[]) {
   return {
